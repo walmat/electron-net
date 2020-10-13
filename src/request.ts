@@ -206,6 +206,8 @@ export const request = ({ proxySession, opts }: props) => {
           currentUrl = redirectUrl;
           request.followRedirect();
         } else {
+
+          request.abort();
           // patch in respBody to avoid TypeError
           respBody = `<html><body>You are being <a href="${redirectUrl}">redirected</a>.</body></html>`;
 

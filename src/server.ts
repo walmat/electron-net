@@ -24,9 +24,11 @@ app.get('/status', (req, res) => {
 })
 
 app.post('/initial', async (req, res) => {
-  const { url, headers } = req.body;
+  const { id, url, headers } = req.body;
 
-  const response: any = await request({ proxySession: session.defaultSession, opts: { url, headers }});
+  const proxySession = session.fromPartition(id);
+
+  const response: any = await request({ proxySession, opts: { url, headers }});
 
   const cookies = response.headers['set-cookie'];
 
@@ -40,29 +42,13 @@ app.post('/initial', async (req, res) => {
 app.post(
   '/sensor',
   async (req: any, res: any) => {
-    const { url, site, cookies, headers, body } = req.body;
+    const { id, url, headers, body } = req.body;
 
-    const proxySession = session.fromPartition(v4());
-
-    const promises = (cookies || []).map((cookie: string) => {
-      const str = cookie.split(';')[0];
-      
-      if (/abck/i.test(str)) {
-        const [, value] = str.split('_abck=');  
-        return proxySession.cookies.set({ url: site, name: '_abck', value, secure: true });
-      }
-
-      const [name, value] = str.split('=');  
-      return proxySession.cookies.set({ url: site, name, value });
-    });
-
-    await Promise.all(promises);
+    const proxySession = session.fromPartition(id);
 
     const response: any = await request({ proxySession, opts: { url, method: 'POST', headers, body }});
 
     const resCookie = response.headers['set-cookie'];
-
-    console.log(resCookie);
 
     await proxySession.clearStorageData();
 
